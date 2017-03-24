@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="sources"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-anim.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-awt-util.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-bridge.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-codec.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-css.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-dom.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-ext.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-extension.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-gui-util.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-gvt.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-parser.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-script.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-svg-dom.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-svggen.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-swing.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-transcoder.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-util.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/batik-xml.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/js.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/pdf-transcoder.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/xalan-2.6.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/xerces_2_5_0.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/xml-apis.jar"/>
-	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/lib/xml-apis-ext.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-anim.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-awt-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-bridge.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-codec.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-css.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-dom.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-ext.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-extension.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-gui-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-gvt.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-parser.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-script.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-svg-dom.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-svggen.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-swing.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-transcoder.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/batik-xml.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/js.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/pdf-transcoder.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/xalan-2.6.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/xerces_2_5_0.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/xml-apis.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/projects/java/wokspace/svgupdater/lib/xml-apis-ext.jar"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.8.0_20"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
