@@ -1,16 +1,28 @@
 package svgupdater;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
+import org.apache.batik.transcoder.TranscoderException;
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.svg2svg.SVGTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
 import org.w3c.dom.svg.SVGElement;
 import org.w3c.dom.xpath.XPathEvaluator;
@@ -21,6 +33,7 @@ public class CommandProcessor {
 	private static final String PARSE_COMMAND = "parse";
 	private static final String WRITE_COMMAND = "write";
 	private static final String EXPORT_COMMAND = "export";
+	private static final String MARKUP_COMMAND = "setids";
 
 	private static final String TEXT_FILE_NAME = "/texts.csv";
 	private static final String IMAGE_FILE_NAME = "/images.csv";
@@ -38,11 +51,39 @@ public class CommandProcessor {
 			cp.showUsage(null);
 			return;
 		}
+		List<String> imageList = null;
+		List<String> textList = null;
 		String infilePath = null;
 		String outfilePath = null;
 		String tmpDirPath = null;
 		String command = args[0].toLowerCase();
 		switch (command) {
+			case CommandProcessor.MARKUP_COMMAND:
+				if (args.length < 2) {
+					cp.showUsage("Missing input and output file pathes");
+					return;
+				}
+				else if (args.length < 3) {
+					cp.showUsage("Missing path to output file");
+					return;
+				}
+				infilePath = args[1];
+				outfilePath = args[2];
+				try {
+					cp.setInputFile(new File(infilePath));
+				}
+				catch (NullPointerException npe) {
+					cp.showUsage("Input file missing or corupted.");
+					return;
+				}
+				try {
+					cp.setOutputFile(new File(outfilePath));
+				}
+				catch (NullPointerException npe) {
+					cp.showUsage("Output file error.");
+					return;
+				}
+			break;
 			case CommandProcessor.PARSE_COMMAND:
 				if (args.length < 2) {
 					cp.showUsage("Missing input file path and path to tmp directory");
@@ -148,44 +189,91 @@ public class CommandProcessor {
 		
 		Document doc = cp.openSVGFile();
 		switch (command) {
+			case CommandProcessor.MARKUP_COMMAND:
+				int imgCount = cp.markupImages(doc);
+				int txtCount = cp.markupTexts(doc);
+				System.out.println("Found "+imgCount+" images and "+txtCount+" texts");
+				cp.saveSVGFile(doc);
+				break;
 			case CommandProcessor.PARSE_COMMAND:
-			List<String> imageList = cp.getListOfImages(doc);
-			if (imageList != null && !imageList.isEmpty()) {
-				try {
-					File imgListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
-					PrintWriter w = new PrintWriter(imgListFile);
-					for (String str : imageList) {
-						w.println(str);
+				imageList = cp.getListOfImages(doc);
+				if (imageList != null && !imageList.isEmpty()) {
+					try {
+						File imgListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+						PrintWriter w = new PrintWriter(imgListFile);
+						for (String str : imageList) {
+							w.println(str);
+						}
+						w.flush();
+						w.close();
 					}
-					w.flush();
-					w.close();
+					catch (Exception exc) {
+						exc.printStackTrace(System.out);
+					}
+				}
+				else {
+					System.out.println("No images found");
+				}
+				textList = cp.getListOfTexts(doc);
+				if (textList != null && !textList.isEmpty()) {
+					try {
+						File textListFile = new File(cp.getTempDirectory(), CommandProcessor.TEXT_FILE_NAME);
+						PrintWriter w = new PrintWriter(textListFile);
+						for (String str : textList) {
+							w.println(str);
+						}
+						w.flush();
+						w.close();
+					}
+					catch (Exception exc) {
+						exc.printStackTrace(System.out);
+					}
+				}
+				else {
+					System.out.println("No texts found");
+				}
+				break;
+			case CommandProcessor.WRITE_COMMAND:
+				File imgListFile = null;
+				File txtListFile = null;
+				Scanner scanner = null;
+				try {
+					imgListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+					scanner = new Scanner(imgListFile);
+					if (scanner.hasNextLine()) {
+						imageList = new ArrayList<String>();
+					}
+					while(scanner.hasNextLine()) {
+						imageList.add(scanner.nextLine());
+					}
 				}
 				catch (Exception exc) {
 					exc.printStackTrace(System.out);
 				}
-			}
-			else {
-				System.out.println("No images found");
-			}
-			List<String> textList = cp.getListOfTexts(doc);
-			if (textList != null && !textList.isEmpty()) {
+				if (imageList == null || imageList.isEmpty()) {
+					System.out.println("No images found");
+				}
+
 				try {
-					File textListFile = new File(cp.getTempDirectory(), CommandProcessor.TEXT_FILE_NAME);
-					PrintWriter w = new PrintWriter(textListFile);
-					for (String str : textList) {
-						w.println(str);
+					txtListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+					scanner = new Scanner(txtListFile);
+					if (scanner.hasNextLine()) {
+						textList = new ArrayList<String>();
 					}
-					w.flush();
-					w.close();
+					while(scanner.hasNextLine()) {
+						textList.add(scanner.nextLine());
+					}
 				}
 				catch (Exception exc) {
 					exc.printStackTrace(System.out);
 				}
-			}
-			else {
-				System.out.println("No texts found");
-			}
-			break;
+
+				if (textList == null || textList.isEmpty()) {
+					System.out.println("No texts found");
+				}
+				modifySVGFile(doc, imageList, textList);
+				cp.saveSVGFile(doc);
+				break;
 		}
 	}
 
@@ -238,6 +326,18 @@ public class CommandProcessor {
 		return doc;
 	}
 
+	public void saveSVGFile(Document doc) {
+		try {
+			byte[] fileData = transcodeToSVG(doc);
+			FileOutputStream fileSave = new FileOutputStream(outfile);
+			fileSave.write(fileData);
+			fileSave.close();		
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	public List<String> getListOfImages(Document doc) {
 		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
 		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
@@ -262,6 +362,51 @@ public class CommandProcessor {
 		return list;
 	}
 
+	public int markupImages(Document doc) {
+		int count= 0;
+		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
+		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
+		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"image\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+		Node node;
+		SVGElement el;
+		while ((node = result.iterateNext()) != null) {
+			if (node instanceof SVGElement) {
+				el = (SVGElement)node;
+				el.setAttribute("id", "img" + String.valueOf(count++));
+			}
+		}
+		return count;
+	}
+	
+	public int markupTexts(Document doc) {
+		int count= 0;
+		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
+		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
+		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"text\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+		Node node, child;
+		while ((node = result.iterateNext()) != null) {
+			if (node.hasChildNodes()) {
+				NodeList children = node.getChildNodes();
+				int len = children.getLength();
+				if (len > 1) {
+					for (int i = 0; i < len; i++) {
+						child = children.item(i);
+						if ("tspan".equals(child.getNodeName())) {
+							((SVGElement)child).setAttribute("id", "txt" + String.valueOf(count++));
+						}
+//						else {
+//							System.out.println("Strange child found. i="+i+", name="+child.getNodeName()+", value="+child.getNodeValue());
+//						}
+					}
+				}
+				else {
+					((SVGElement)node).setAttribute("id", "txt" + String.valueOf(count++));
+				}
+			}
+		}
+		return count;
+	}
+
 	public List<String> getListOfTexts(Document doc) {
 		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
 		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
@@ -271,18 +416,84 @@ public class CommandProcessor {
 		int count= 0;
 		List<String> list = new ArrayList<String>();
 		String str;
-		Node node;
-		SVGElement el;
+		Node node, child;
 		while ((node = result.iterateNext()) != null) {
-			if (node instanceof SVGElement) {
-				el = (SVGElement)node;
-//				str = el.getAttribute("id") + "," + el.getAttributeNS("http://www.w3.org/1999/xlink", "href");
-//				list.add(str);
+			if (node.hasChildNodes()) {
+				NodeList children = node.getChildNodes();
+				int len = children.getLength();
+				if (len > 1) {
+					for (int i = 0; i < len; i++) {
+						child = children.item(i);
+						if ("tspan".equals(child.getNodeName())) {
+							str = ((SVGElement)child).getAttribute("id") + "," + child.getTextContent();
+							list.add(str);
+							count++;
+						}
+//						else {
+//							System.out.println("Strange child found. i="+i+", name="+child.getNodeName()+", value="+child.getNodeValue());
+//						}
+					}
+				}
+				else {
+					str = ((SVGElement)node).getAttribute("id") + "," + node.getTextContent();
+					list.add(str);
+					count++;
+				}
 			}
-
-			count++;
 		}
 		System.out.println("Found "+count+" texts");
 		return list;
+	}
+
+	public byte[] transcodeToSVG(Document doc) throws TranscoderException {
+	    try {
+	        //Determine output type:
+	        SVGTranscoder t = new SVGTranscoder();
+
+	        //Set transcoder input/output
+	        TranscoderInput input = new TranscoderInput(doc);
+	        ByteArrayOutputStream bytestream = new ByteArrayOutputStream();
+	        OutputStreamWriter ostream = new OutputStreamWriter(bytestream, "UTF-8");
+	        TranscoderOutput output = new TranscoderOutput(ostream);
+
+	        //Perform transcoding
+	        t.transcode(input, output);
+	        ostream.flush();
+	        ostream.close();
+
+	        return bytestream.toByteArray();
+
+	    } catch (IOException e) {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+	    }
+	    return null;
+	}	
+
+	public void modifySVGFile(Document doc, List<String> imageList, List<String> textList) {
+		Map<String, String> imageMap = new HashMap<String, String>();
+		for (String str : imageList) {
+			int komma = str.indexOf(",");
+			if (komma < 0) {
+				continue;
+			}
+			String id = str.substring(0,  komma);
+			String link = str.substring(komma + 1);
+			imageMap.put(id,  link);
+		}
+		Map<String, String> textMap = new HashMap<String, String>();
+		for (String str : textList) {
+			int komma = str.indexOf(",");
+			if (komma < 0) {
+				continue;
+			}
+			String id = str.substring(0,  komma);
+			String link = str.substring(komma + 1);
+			textMap.put(id,  link);
+		}
+		
+		
+		
+		
 	}
 }

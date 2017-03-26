@@ -54,7 +54,7 @@ public class BatikDisplay {
 	throws IOException {
 
         //C:/projects/batik-1.5.1/samples/sizeOfSun.svg
-        File file = new File("D:/cache/svg/total_forskolin_label_2.svg");
+        File file = new File("D:/cache/svg/is1.svg");
 //        File file = new File("D:/cache/svg/sydney.svg");
         String url = file.toURL().toString();
         System.out.println(url);
