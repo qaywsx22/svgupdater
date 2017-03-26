@@ -21,6 +21,7 @@ import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.svg2svg.SVGTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
@@ -255,7 +256,7 @@ public class CommandProcessor {
 				}
 
 				try {
-					txtListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+					txtListFile = new File(cp.getTempDirectory(), CommandProcessor.TEXT_FILE_NAME);
 					scanner = new Scanner(txtListFile);
 					if (scanner.hasNextLine()) {
 						textList = new ArrayList<String>();
@@ -271,7 +272,7 @@ public class CommandProcessor {
 				if (textList == null || textList.isEmpty()) {
 					System.out.println("No texts found");
 				}
-				modifySVGFile(doc, imageList, textList);
+				cp.modifySVGFile(doc, imageList, textList);
 				cp.saveSVGFile(doc);
 				break;
 		}
@@ -471,15 +472,20 @@ public class CommandProcessor {
 	}	
 
 	public void modifySVGFile(Document doc, List<String> imageList, List<String> textList) {
-		Map<String, String> imageMap = new HashMap<String, String>();
+		String id, value;
+		Element el;
+		//
 		for (String str : imageList) {
 			int komma = str.indexOf(",");
 			if (komma < 0) {
 				continue;
 			}
-			String id = str.substring(0,  komma);
-			String link = str.substring(komma + 1);
-			imageMap.put(id,  link);
+			id = str.substring(0,  komma);
+			value = str.substring(komma + 1);
+			el = doc.getElementById(id);
+			if (el != null) {
+				el.setAttributeNS("http://www.w3.org/1999/xlink", "href", value);
+			}
 		}
 		Map<String, String> textMap = new HashMap<String, String>();
 		for (String str : textList) {
@@ -487,13 +493,13 @@ public class CommandProcessor {
 			if (komma < 0) {
 				continue;
 			}
-			String id = str.substring(0,  komma);
-			String link = str.substring(komma + 1);
-			textMap.put(id,  link);
+			id = str.substring(0,  komma);
+			value = str.substring(komma + 1);
+			el = doc.getElementById(id);
+			if (el != null) {
+				((Node)el).setTextContent(value);
+			}
 		}
-		
-		
-		
 		
 	}
 }
