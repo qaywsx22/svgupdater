@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.JPEGTranscoder;
+import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.apache.batik.transcoder.svg2svg.SVGTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.Document;
@@ -275,6 +278,15 @@ public class CommandProcessor {
 				cp.modifySVGFile(doc, imageList, textList);
 				cp.saveSVGFile(doc);
 				break;
+			case CommandProcessor.EXPORT_COMMAND:
+				try {
+					cp.exportJPEG(doc);
+//					cp.exportPNG(doc);
+				}
+				catch (Exception exc) {
+					exc.printStackTrace(System.out);
+				}
+				break;
 		}
 	}
 
@@ -502,4 +514,34 @@ public class CommandProcessor {
 		}
 		
 	}
+
+    public void exportJPEG(Document doc) throws Exception {
+        JPEGTranscoder t = new JPEGTranscoder();
+        t.addTranscodingHint(JPEGTranscoder.KEY_WIDTH, new Float(3800));
+        t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(.8));
+        // Set the transcoder input and output.
+        TranscoderInput input = new TranscoderInput(doc);
+        OutputStream ostream = new FileOutputStream(outfile);
+        TranscoderOutput output = new TranscoderOutput(ostream);
+        // Perform the transcoding.
+        t.transcode(input, output);
+        ostream.flush();
+        ostream.close();
+		System.out.println("Export "+infile.getPath()+" to "+outfile.getPath());
+    }
+
+    public void exportPNG(Document doc) throws Exception {
+        PNGTranscoder t = new PNGTranscoder();
+        t.addTranscodingHint(PNGTranscoder.KEY_WIDTH, new Float(3800));
+//        t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(.8));
+        // Set the transcoder input and output.
+        TranscoderInput input = new TranscoderInput(doc);
+        OutputStream ostream = new FileOutputStream(outfile);
+        TranscoderOutput output = new TranscoderOutput(ostream);
+        // Perform the transcoding.
+        t.transcode(input, output);
+        ostream.flush();
+        ostream.close();
+		System.out.println("Export "+infile.getPath()+" to "+outfile.getPath());
+    }
 }
