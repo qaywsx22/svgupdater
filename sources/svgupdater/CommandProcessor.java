@@ -39,8 +39,10 @@ public class CommandProcessor {
 	private static final String EXPORT_COMMAND = "export";
 	private static final String MARKUP_COMMAND = "setids";
 
-	private static final String TEXT_FILE_NAME = "/texts.csv";
-	private static final String IMAGE_FILE_NAME = "/images.csv";
+//	private static final String TEXT_FILE_NAME = "/texts.csv";
+//	private static final String IMAGE_FILE_NAME = "/images.csv";
+	private static final String TEXT_FILE_SUFFIX = "_texts.csv";
+	private static final String IMAGE_FILE_SUFFIX = "_images.csv";
 
 	private File infile;
 	private File outfile;
@@ -53,23 +55,25 @@ public class CommandProcessor {
 		CommandProcessor cp = new CommandProcessor();
 		if (args.length == 0) {
 			cp.showUsage(null);
-			return;
+			System.exit(1);
 		}
 		List<String> imageList = null;
 		List<String> textList = null;
 		String infilePath = null;
 		String outfilePath = null;
 		String tmpDirPath = null;
+		File imgListFile;
+		File textListFile;
 		String command = args[0].toLowerCase();
 		switch (command) {
 			case CommandProcessor.MARKUP_COMMAND:
 				if (args.length < 2) {
 					cp.showUsage("Missing input and output file pathes");
-					return;
+					System.exit(2);
 				}
 				else if (args.length < 3) {
 					cp.showUsage("Missing path to output file");
-					return;
+					System.exit(3);
 				}
 				infilePath = args[1];
 				outfilePath = args[2];
@@ -78,24 +82,24 @@ public class CommandProcessor {
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Input file missing or corupted.");
-					return;
+					System.exit(4);
 				}
 				try {
 					cp.setOutputFile(new File(outfilePath));
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Output file error.");
-					return;
+					System.exit(5);
 				}
 			break;
 			case CommandProcessor.PARSE_COMMAND:
 				if (args.length < 2) {
 					cp.showUsage("Missing input file path and path to tmp directory");
-					return;
+					System.exit(6);
 				}
 				else if (args.length < 3) {
 					cp.showUsage("Missing path to tmp directory");
-					return;
+					System.exit(7);
 				}
 				infilePath = args[1];
 				tmpDirPath = args[2];
@@ -104,32 +108,32 @@ public class CommandProcessor {
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Input file missing or corupted.");
-					return;
+					System.exit(8);
 				}
 				try {
 					cp.setTempDirectory(new File(tmpDirPath));
 					if (!cp.getTempDirectory().isDirectory()) {
 						cp.showUsage("Third argument must be a path to directory.");
-						return;
+						System.exit(9);
 					}
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Tmp directory missing or corupted.");
-					return;
+					System.exit(10);
 				}
 			break;
 			case CommandProcessor.WRITE_COMMAND:
 				if (args.length < 2) {
 					cp.showUsage("Missing input and output file pathes and path to tmp directory");
-					return;
+					System.exit(11);
 				}
 				else if (args.length < 3) {
 					cp.showUsage("Missing output file path and path to tmp directory");
-					return;
+					System.exit(12);
 				}
 				else if (args.length < 4) {
 					cp.showUsage("Missing path to tmp directory");
-					return;
+					System.exit(13);
 				}
 				infilePath = args[1];
 				outfilePath = args[2];
@@ -139,35 +143,35 @@ public class CommandProcessor {
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Input file missing or corupted.");
-					return;
+					System.exit(14);
 				}
 				try {
 					cp.setOutputFile(new File(outfilePath));
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Output file error.");
-					return;
+					System.exit(15);
 				}
 				try {
 					cp.setTempDirectory(new File(tmpDirPath));
 					if (!cp.getTempDirectory().isDirectory()) {
 						cp.showUsage("Third argument must be a path to directory.");
-						return;
+						System.exit(16);
 					}
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Tmp directory missing or corupted.");
-					return;
+					System.exit(17);
 				}
 			break;
 			case CommandProcessor.EXPORT_COMMAND:
 				if (args.length < 2) {
 					cp.showUsage("Missing input and output file pathes");
-					return;
+					System.exit(18);
 				}
 				else if (args.length < 3) {
 					cp.showUsage("Missing path to output file");
-					return;
+					System.exit(19);
 				}
 				infilePath = args[1];
 				outfilePath = args[2];
@@ -176,19 +180,19 @@ public class CommandProcessor {
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Input file missing or corupted.");
-					return;
+					System.exit(20);
 				}
 				try {
 					cp.setOutputFile(new File(outfilePath));
 				}
 				catch (NullPointerException npe) {
 					cp.showUsage("Output file error.");
-					return;
+					System.exit(21);
 				}
 			break;
 			default:
 				cp.showUsage("Illegal command: " + command + ". Try again.");
-				return;
+				System.exit(22);
 		}
 		
 		Document doc = cp.openSVGFile();
@@ -203,7 +207,7 @@ public class CommandProcessor {
 				imageList = cp.getListOfImages(doc);
 				if (imageList != null && !imageList.isEmpty()) {
 					try {
-						File imgListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+						imgListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.IMAGE_FILE_SUFFIX);
 						PrintWriter w = new PrintWriter(imgListFile);
 						for (String str : imageList) {
 							w.println(str);
@@ -221,7 +225,7 @@ public class CommandProcessor {
 				textList = cp.getListOfTexts(doc);
 				if (textList != null && !textList.isEmpty()) {
 					try {
-						File textListFile = new File(cp.getTempDirectory(), CommandProcessor.TEXT_FILE_NAME);
+						textListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.TEXT_FILE_SUFFIX);
 						PrintWriter w = new PrintWriter(textListFile);
 						for (String str : textList) {
 							w.println(str);
@@ -238,11 +242,9 @@ public class CommandProcessor {
 				}
 				break;
 			case CommandProcessor.WRITE_COMMAND:
-				File imgListFile = null;
-				File txtListFile = null;
 				Scanner scanner = null;
 				try {
-					imgListFile = new File(cp.getTempDirectory(), CommandProcessor.IMAGE_FILE_NAME);
+					imgListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.IMAGE_FILE_SUFFIX);
 					scanner = new Scanner(imgListFile);
 					if (scanner.hasNextLine()) {
 						imageList = new ArrayList<String>();
@@ -259,8 +261,8 @@ public class CommandProcessor {
 				}
 
 				try {
-					txtListFile = new File(cp.getTempDirectory(), CommandProcessor.TEXT_FILE_NAME);
-					scanner = new Scanner(txtListFile);
+					textListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.TEXT_FILE_SUFFIX);
+					scanner = new Scanner(textListFile);
 					if (scanner.hasNextLine()) {
 						textList = new ArrayList<String>();
 					}
@@ -280,14 +282,15 @@ public class CommandProcessor {
 				break;
 			case CommandProcessor.EXPORT_COMMAND:
 				try {
-					cp.exportJPEG(doc);
-//					cp.exportPNG(doc);
+//					cp.exportJPEG(doc);
+					cp.exportPNG(doc);
 				}
 				catch (Exception exc) {
 					exc.printStackTrace(System.out);
 				}
 				break;
 		}
+		System.exit(0);
 	}
 
 	private void showUsage(String message) {
