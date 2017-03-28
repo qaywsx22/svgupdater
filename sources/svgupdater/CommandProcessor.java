@@ -1,550 +1,188 @@
 package svgupdater;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
-import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
-import org.apache.batik.transcoder.TranscoderException;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.JPEGTranscoder;
-import org.apache.batik.transcoder.image.PNGTranscoder;
-import org.apache.batik.transcoder.svg2svg.SVGTranscoder;
-import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.ParseException;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.svg.SVGDocument;
-import org.w3c.dom.svg.SVGElement;
-import org.w3c.dom.xpath.XPathEvaluator;
-import org.w3c.dom.xpath.XPathResult;
 
 public class CommandProcessor {
 
-	private static final String PARSE_COMMAND = "parse";
-	private static final String WRITE_COMMAND = "write";
-	private static final String EXPORT_COMMAND = "export";
-	private static final String MARKUP_COMMAND = "setids";
+	static final String PARSE_COMMAND = "parse";
+	static final String WRITE_COMMAND = "write";
+	static final String EXPORT_COMMAND = "export";
+	static final String MARKUP_COMMAND = "markup";
 
-//	private static final String TEXT_FILE_NAME = "/texts.csv";
-//	private static final String IMAGE_FILE_NAME = "/images.csv";
-	private static final String TEXT_FILE_SUFFIX = "_texts.csv";
-	private static final String IMAGE_FILE_SUFFIX = "_images.csv";
+	static final String TEXT_FILE_SUFFIX = "_texts.csv";
+	static final String IMAGE_FILE_SUFFIX = "_images.csv";
 
-	private File infile;
-	private File outfile;
-	private File tmpDir;
+    CommandLine line = null;
+    Options options = null;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		CommandProcessor cp = new CommandProcessor();
-		if (args.length == 0) {
-			cp.showUsage(null);
+		cp.initOptions();
+
+		CommandLineParser parser = new DefaultParser();
+	    try {
+	        // parse the command line arguments
+	        cp.line = parser.parse(cp.options, args);
+	    }
+	    catch( ParseException exp ) {
+	        System.err.println( "Parsing error: " + exp.getMessage());
 			System.exit(1);
-		}
-		List<String> imageList = null;
-		List<String> textList = null;
-		String infilePath = null;
-		String outfilePath = null;
-		String tmpDirPath = null;
-		File imgListFile;
-		File textListFile;
-		String command = args[0].toLowerCase();
-		switch (command) {
-			case CommandProcessor.MARKUP_COMMAND:
-				if (args.length < 2) {
-					cp.showUsage("Missing input and output file pathes");
-					System.exit(2);
-				}
-				else if (args.length < 3) {
-					cp.showUsage("Missing path to output file");
-					System.exit(3);
-				}
-				infilePath = args[1];
-				outfilePath = args[2];
-				try {
-					cp.setInputFile(new File(infilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Input file missing or corupted.");
-					System.exit(4);
-				}
-				try {
-					cp.setOutputFile(new File(outfilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Output file error.");
-					System.exit(5);
-				}
-			break;
-			case CommandProcessor.PARSE_COMMAND:
-				if (args.length < 2) {
-					cp.showUsage("Missing input file path and path to tmp directory");
-					System.exit(6);
-				}
-				else if (args.length < 3) {
-					cp.showUsage("Missing path to tmp directory");
-					System.exit(7);
-				}
-				infilePath = args[1];
-				tmpDirPath = args[2];
-				try {
-					cp.setInputFile(new File(infilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Input file missing or corupted.");
-					System.exit(8);
-				}
-				try {
-					cp.setTempDirectory(new File(tmpDirPath));
-					if (!cp.getTempDirectory().isDirectory()) {
-						cp.showUsage("Third argument must be a path to directory.");
-						System.exit(9);
-					}
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Tmp directory missing or corupted.");
-					System.exit(10);
-				}
-			break;
-			case CommandProcessor.WRITE_COMMAND:
-				if (args.length < 2) {
-					cp.showUsage("Missing input and output file pathes and path to tmp directory");
-					System.exit(11);
-				}
-				else if (args.length < 3) {
-					cp.showUsage("Missing output file path and path to tmp directory");
-					System.exit(12);
-				}
-				else if (args.length < 4) {
-					cp.showUsage("Missing path to tmp directory");
-					System.exit(13);
-				}
-				infilePath = args[1];
-				outfilePath = args[2];
-				tmpDirPath = args[3];
-				try {
-					cp.setInputFile(new File(infilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Input file missing or corupted.");
-					System.exit(14);
-				}
-				try {
-					cp.setOutputFile(new File(outfilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Output file error.");
-					System.exit(15);
-				}
-				try {
-					cp.setTempDirectory(new File(tmpDirPath));
-					if (!cp.getTempDirectory().isDirectory()) {
-						cp.showUsage("Third argument must be a path to directory.");
-						System.exit(16);
-					}
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Tmp directory missing or corupted.");
-					System.exit(17);
-				}
-			break;
-			case CommandProcessor.EXPORT_COMMAND:
-				if (args.length < 2) {
-					cp.showUsage("Missing input and output file pathes");
-					System.exit(18);
-				}
-				else if (args.length < 3) {
-					cp.showUsage("Missing path to output file");
-					System.exit(19);
-				}
-				infilePath = args[1];
-				outfilePath = args[2];
-				try {
-					cp.setInputFile(new File(infilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Input file missing or corupted.");
-					System.exit(20);
-				}
-				try {
-					cp.setOutputFile(new File(outfilePath));
-				}
-				catch (NullPointerException npe) {
-					cp.showUsage("Output file error.");
-					System.exit(21);
-				}
-			break;
-			default:
-				cp.showUsage("Illegal command: " + command + ". Try again.");
-				System.exit(22);
-		}
+	    }
 		
-		Document doc = cp.openSVGFile();
+		ImageFileProcessor ifp = new ImageFileProcessor();
+		cp.initImageFileProcessor(ifp);
+		
+		String command = null;
+		if (cp.line.hasOption(CommandProcessor.MARKUP_COMMAND)) {
+			command = CommandProcessor.MARKUP_COMMAND;
+		}
+		else if (cp.line.hasOption(CommandProcessor.PARSE_COMMAND)) {
+			command = CommandProcessor.PARSE_COMMAND;
+		}
+		else if (cp.line.hasOption(CommandProcessor.WRITE_COMMAND)) {
+			command = CommandProcessor.WRITE_COMMAND;
+		}
+		else if (cp.line.hasOption(CommandProcessor.EXPORT_COMMAND)) {
+			command = CommandProcessor.EXPORT_COMMAND;
+		}
+		if (command == null) {
+			System.out.println("Invalid or missing command option.");
+			cp.showHelp(cp.options);
+			System.exit(3);
+		}
+
+		Document doc = ifp.openSVGFile();
 		switch (command) {
 			case CommandProcessor.MARKUP_COMMAND:
-				int imgCount = cp.markupImages(doc);
-				int txtCount = cp.markupTexts(doc);
-				System.out.println("Found "+imgCount+" images and "+txtCount+" texts");
-				cp.saveSVGFile(doc);
+				ifp.markup(doc);
 				break;
 			case CommandProcessor.PARSE_COMMAND:
-				imageList = cp.getListOfImages(doc);
-				if (imageList != null && !imageList.isEmpty()) {
-					try {
-						imgListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.IMAGE_FILE_SUFFIX);
-						PrintWriter w = new PrintWriter(imgListFile);
-						for (String str : imageList) {
-							w.println(str);
-						}
-						w.flush();
-						w.close();
-					}
-					catch (Exception exc) {
-						exc.printStackTrace(System.out);
-					}
-				}
-				else {
-					System.out.println("No images found");
-				}
-				textList = cp.getListOfTexts(doc);
-				if (textList != null && !textList.isEmpty()) {
-					try {
-						textListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.TEXT_FILE_SUFFIX);
-						PrintWriter w = new PrintWriter(textListFile);
-						for (String str : textList) {
-							w.println(str);
-						}
-						w.flush();
-						w.close();
-					}
-					catch (Exception exc) {
-						exc.printStackTrace(System.out);
-					}
-				}
-				else {
-					System.out.println("No texts found");
-				}
+				ifp.parse(doc);
 				break;
 			case CommandProcessor.WRITE_COMMAND:
-				Scanner scanner = null;
-				try {
-					imgListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.IMAGE_FILE_SUFFIX);
-					scanner = new Scanner(imgListFile);
-					if (scanner.hasNextLine()) {
-						imageList = new ArrayList<String>();
-					}
-					while(scanner.hasNextLine()) {
-						imageList.add(scanner.nextLine());
-					}
-				}
-				catch (Exception exc) {
-					exc.printStackTrace(System.out);
-				}
-				if (imageList == null || imageList.isEmpty()) {
-					System.out.println("No images found");
-				}
-
-				try {
-					textListFile = new File(cp.getTempDirectory(), cp.infile.getName() + CommandProcessor.TEXT_FILE_SUFFIX);
-					scanner = new Scanner(textListFile);
-					if (scanner.hasNextLine()) {
-						textList = new ArrayList<String>();
-					}
-					while(scanner.hasNextLine()) {
-						textList.add(scanner.nextLine());
-					}
-				}
-				catch (Exception exc) {
-					exc.printStackTrace(System.out);
-				}
-
-				if (textList == null || textList.isEmpty()) {
-					System.out.println("No texts found");
-				}
-				cp.modifySVGFile(doc, imageList, textList);
-				cp.saveSVGFile(doc);
+				ifp.write(doc);
 				break;
 			case CommandProcessor.EXPORT_COMMAND:
-				try {
-//					cp.exportJPEG(doc);
-					cp.exportPNG(doc);
-				}
-				catch (Exception exc) {
-					exc.printStackTrace(System.out);
-				}
+				ifp.export(doc);
 				break;
 		}
 		System.exit(0);
 	}
 
-	private void showUsage(String message) {
-		if (message != null && message.length() > 0) {
-			System.out.println(message);
+	private void initOptions() {
+		options = new Options();
+
+		Option opt = new Option(CommandProcessor.MARKUP_COMMAND, "set identifiers for all text and image elements");
+		options.addOption(opt);
+
+		opt = new Option(CommandProcessor.PARSE_COMMAND, "make lists of text and image elements"); 
+		options.addOption(opt);
+
+		opt = new Option(CommandProcessor.WRITE_COMMAND, "write content of text and image elements from items in corresponding list files"); 
+		options.addOption(opt);
+
+		opt = new Option(CommandProcessor.EXPORT_COMMAND, "export image from svg to jpg or png format"); 
+		options.addOption(opt);
+				
+		opt = Option.builder("source")
+				.argName("file")
+                .hasArg()
+                .desc("source file")
+                .build( );
+		options.addOption(opt);
+
+		opt = Option.builder("target")
+			.argName("file")
+			.hasArg()
+			.desc("target file")
+			.build();
+		options.addOption(opt);
+
+		opt = Option.builder("tempdir")
+				.argName("path")
+				.hasArg()
+				.desc("path to directory with temporary list files")
+				.build();
+		options.addOption(opt);
+
+		opt = Option.builder("width")
+				.hasArg()
+				.argName("WIDTH")
+				.valueSeparator()
+				.desc("width of the exported target image")
+				.build();
+		options.addOption(opt);
+
+		opt = Option.builder("quality")
+				.hasArg()
+				.argName("FACTOR")
+				.valueSeparator()
+				.desc("jpeg encoder quality factor. Float (between 0 and 1). 1 - no lossy")
+				.build();
+		options.addOption(opt);
+
+		opt = Option.builder("format")
+				.hasArg()
+				.argName("FORMAT")
+				.valueSeparator()
+				.desc("target file format for export. Can be PNG or JPG")
+				.build();
+		options.addOption(opt);
+
+		opt= new Option( "help", "print this message" );
+		options.addOption(opt);
+	}
+
+	private void initImageFileProcessor(ImageFileProcessor ipf) {
+		String str;
+		try {
+			if (line.hasOption("source")) {
+				str = line.getOptionValue("source");
+				ipf.setInputFile(new File(str));
+			}
+			if (line.hasOption("target")) {
+				str = line.getOptionValue("target");
+				ipf.setOutputFile(new File(str));
+			}
+			if (line.hasOption("tempdir")) {
+				str = line.getOptionValue("tempdir");
+				ipf.setTempDirectory(new File(str));
+			}
+			if (line.hasOption("width")) {
+				str = line.getOptionValue("width");
+				ipf.setWidth(Integer.parseInt(str));
+			}
+			if (line.hasOption("quality")) {
+				str = line.getOptionValue("quality");
+				ipf.setQuality(Float.parseFloat(str));
+			}
+			if (line.hasOption("format")) {
+				str = line.getOptionValue("format");
+				ipf.setExportFormat(str);
+			}
 		}
-		else {
-			System.out.println("The programm must have arguments!!!");
+		catch (Exception exc) {
+			System.out.println("Initialisation failed. Illegal or invalid parameter found.");
+			exc.printStackTrace();
+			showHelp(this.options);
+			System.exit(2);
 		}
-	}
-
-	private void setInputFile(File file) {
-		this.infile = file;
-	}
-
-	private File getInputFile() {
-		return this.infile;
-	}
-
-	private void setOutputFile(File file) {
-		this.outfile = file;
-	}
-
-	private File getOutputFile() {
-		return this.outfile;
-	}
-
-	private void setTempDirectory(File dir) {
-		this.tmpDir = dir;
-	}
-
-	private File getTempDirectory() {
-		return this.tmpDir;
 	}
 	
-	private Document openSVGFile() {
-		Document doc = null;
-		FileInputStream svgInputStream = null;
-		try {
-			// Load input file
-			svgInputStream = new FileInputStream(infile);
-			// Load SVG into DOM-Tree
-			String parser = XMLResourceDescriptor.getXMLParserClassName();
-			SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
-			doc = factory.createDocument(parser, svgInputStream);
-		} catch (Exception exc) {
-			exc.printStackTrace(System.out);
-		}
-		return doc;
+	private void showHelp(Options options) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp( "svgupdater", options);		
 	}
-
-	public void saveSVGFile(Document doc) {
-		try {
-			byte[] fileData = transcodeToSVG(doc);
-			FileOutputStream fileSave = new FileOutputStream(outfile);
-			fileSave.write(fileData);
-			fileSave.close();		
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public List<String> getListOfImages(Document doc) {
-		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
-		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
-//		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"image\" and @class=\"img-editable\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"image\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-
-		int count= 0;
-		List<String> list = new ArrayList<String>();
-		String str;
-		Node node;
-		SVGElement el;
-		while ((node = result.iterateNext()) != null) {
-			if (node instanceof SVGElement) {
-				el = (SVGElement)node;
-				str = el.getAttribute("id") + "," + el.getAttributeNS("http://www.w3.org/1999/xlink", "href");
-				list.add(str);
-			}
-
-			count++;
-		}
-		System.out.println("Found "+count+" images");
-		return list;
-	}
-
-	public int markupImages(Document doc) {
-		int count= 0;
-		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
-		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
-		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"image\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-		Node node;
-		SVGElement el;
-		while ((node = result.iterateNext()) != null) {
-			if (node instanceof SVGElement) {
-				el = (SVGElement)node;
-				el.setAttribute("id", "img" + String.valueOf(count++));
-			}
-		}
-		return count;
-	}
-	
-	public int markupTexts(Document doc) {
-		int count= 0;
-		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
-		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
-		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"text\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-		Node node, child;
-		while ((node = result.iterateNext()) != null) {
-			if (node.hasChildNodes()) {
-				NodeList children = node.getChildNodes();
-				int len = children.getLength();
-				if (len > 1) {
-					for (int i = 0; i < len; i++) {
-						child = children.item(i);
-						if ("tspan".equals(child.getNodeName())) {
-							((SVGElement)child).setAttribute("id", "txt" + String.valueOf(count++));
-						}
-//						else {
-//							System.out.println("Strange child found. i="+i+", name="+child.getNodeName()+", value="+child.getNodeValue());
-//						}
-					}
-				}
-				else {
-					((SVGElement)node).setAttribute("id", "txt" + String.valueOf(count++));
-				}
-			}
-		}
-		return count;
-	}
-
-	public List<String> getListOfTexts(Document doc) {
-		XPathEvaluator xpathEvaluator = (XPathEvaluator) doc;
-		SVGElement searchRoot = ((SVGDocument)doc).getRootElement();
-//		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"image\" and @class=\"img-editable\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-		XPathResult result = (XPathResult) xpathEvaluator.evaluate(".//*[local-name()=\"text\"]", searchRoot, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-
-		int count= 0;
-		List<String> list = new ArrayList<String>();
-		String str;
-		Node node, child;
-		while ((node = result.iterateNext()) != null) {
-			if (node.hasChildNodes()) {
-				NodeList children = node.getChildNodes();
-				int len = children.getLength();
-				if (len > 1) {
-					for (int i = 0; i < len; i++) {
-						child = children.item(i);
-						if ("tspan".equals(child.getNodeName())) {
-							str = ((SVGElement)child).getAttribute("id") + "," + child.getTextContent();
-							list.add(str);
-							count++;
-						}
-//						else {
-//							System.out.println("Strange child found. i="+i+", name="+child.getNodeName()+", value="+child.getNodeValue());
-//						}
-					}
-				}
-				else {
-					str = ((SVGElement)node).getAttribute("id") + "," + node.getTextContent();
-					list.add(str);
-					count++;
-				}
-			}
-		}
-		System.out.println("Found "+count+" texts");
-		return list;
-	}
-
-	public byte[] transcodeToSVG(Document doc) throws TranscoderException {
-	    try {
-	        //Determine output type:
-	        SVGTranscoder t = new SVGTranscoder();
-
-	        //Set transcoder input/output
-	        TranscoderInput input = new TranscoderInput(doc);
-	        ByteArrayOutputStream bytestream = new ByteArrayOutputStream();
-	        OutputStreamWriter ostream = new OutputStreamWriter(bytestream, "UTF-8");
-	        TranscoderOutput output = new TranscoderOutput(ostream);
-
-	        //Perform transcoding
-	        t.transcode(input, output);
-	        ostream.flush();
-	        ostream.close();
-
-	        return bytestream.toByteArray();
-
-	    } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
-	    }
-	    return null;
-	}	
-
-	public void modifySVGFile(Document doc, List<String> imageList, List<String> textList) {
-		String id, value;
-		Element el;
-		//
-		for (String str : imageList) {
-			int komma = str.indexOf(",");
-			if (komma < 0) {
-				continue;
-			}
-			id = str.substring(0,  komma);
-			value = str.substring(komma + 1);
-			el = doc.getElementById(id);
-			if (el != null) {
-				el.setAttributeNS("http://www.w3.org/1999/xlink", "href", value);
-			}
-		}
-		Map<String, String> textMap = new HashMap<String, String>();
-		for (String str : textList) {
-			int komma = str.indexOf(",");
-			if (komma < 0) {
-				continue;
-			}
-			id = str.substring(0,  komma);
-			value = str.substring(komma + 1);
-			el = doc.getElementById(id);
-			if (el != null) {
-				((Node)el).setTextContent(value);
-			}
-		}
-		
-	}
-
-    public void exportJPEG(Document doc) throws Exception {
-        JPEGTranscoder t = new JPEGTranscoder();
-        t.addTranscodingHint(JPEGTranscoder.KEY_WIDTH, new Float(3800));
-        t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(.8));
-        // Set the transcoder input and output.
-        TranscoderInput input = new TranscoderInput(doc);
-        OutputStream ostream = new FileOutputStream(outfile);
-        TranscoderOutput output = new TranscoderOutput(ostream);
-        // Perform the transcoding.
-        t.transcode(input, output);
-        ostream.flush();
-        ostream.close();
-		System.out.println("Export "+infile.getPath()+" to "+outfile.getPath());
-    }
-
-    public void exportPNG(Document doc) throws Exception {
-        PNGTranscoder t = new PNGTranscoder();
-        t.addTranscodingHint(PNGTranscoder.KEY_WIDTH, new Float(3800));
-//        t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(.8));
-        // Set the transcoder input and output.
-        TranscoderInput input = new TranscoderInput(doc);
-        OutputStream ostream = new FileOutputStream(outfile);
-        TranscoderOutput output = new TranscoderOutput(ostream);
-        // Perform the transcoding.
-        t.transcode(input, output);
-        ostream.flush();
-        ostream.close();
-		System.out.println("Export "+infile.getPath()+" to "+outfile.getPath());
-    }
 }
