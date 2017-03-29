@@ -110,7 +110,8 @@ public class ImageFileProcessor {
 			SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
 			doc = factory.createDocument(parser, svgInputStream);
 		} catch (Exception exc) {
-			exc.printStackTrace(System.out);
+			System.out.println("Error open SVG source file");
+			System.exit(4);
 		}
 		return doc;
 	}
@@ -122,8 +123,8 @@ public class ImageFileProcessor {
 			fileSave.write(fileData);
 			fileSave.close();		
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Error write SVG target file");
+			System.exit(5);
 		}
 	}
 
@@ -253,8 +254,8 @@ public class ImageFileProcessor {
 	        return bytestream.toByteArray();
 
 	    } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
+			System.out.println("Error in SVG file transcoding");
+			System.exit(6);
 	    }
 	    return null;
 	}	
@@ -343,7 +344,8 @@ public class ImageFileProcessor {
 				w.close();
 			}
 			catch (Exception exc) {
-				exc.printStackTrace(System.out);
+				System.out.println("Error write image list file");
+				System.exit(7);
 			}
 		}
 		else {
@@ -361,7 +363,8 @@ public class ImageFileProcessor {
 				w.close();
 			}
 			catch (Exception exc) {
-				exc.printStackTrace(System.out);
+				System.out.println("Error write text list file");
+				System.exit(8);
 			}
 		}
 		else {
@@ -386,7 +389,8 @@ public class ImageFileProcessor {
 			}
 		}
 		catch (Exception exc) {
-			exc.printStackTrace(System.out);
+			System.out.println("Error in image list file processing");
+			System.exit(9);
 		}
 		if (imageList == null || imageList.isEmpty()) {
 			System.out.println("No images found");
@@ -403,7 +407,8 @@ public class ImageFileProcessor {
 			}
 		}
 		catch (Exception exc) {
-			exc.printStackTrace(System.out);
+			System.out.println("Error in text list file processing");
+			System.exit(10);
 		}
 
 		if (textList == null || textList.isEmpty()) {
@@ -415,11 +420,16 @@ public class ImageFileProcessor {
 
     public void export(Document doc) {
 		try {
-//			cp.exportJPEG(doc);
-			exportPNG(doc);
+			if ("png".equals(format)) {
+				exportPNG(doc);
+			}
+			else {
+				exportJPEG(doc);
+			}
 		}
 		catch (Exception exc) {
-			exc.printStackTrace(System.out);
+			System.out.println("Error in export file processing");
+			System.exit(11);
 		}
     }
 }

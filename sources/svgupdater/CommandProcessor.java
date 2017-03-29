@@ -12,6 +12,7 @@ import org.apache.commons.cli.ParseException;
 import org.w3c.dom.Document;
 
 public class CommandProcessor {
+	public static final String version = "0.13";
 
 	static final String PARSE_COMMAND = "parse";
 	static final String WRITE_COMMAND = "write";
@@ -21,7 +22,7 @@ public class CommandProcessor {
 	static final String TEXT_FILE_SUFFIX = "_texts.csv";
 	static final String IMAGE_FILE_SUFFIX = "_images.csv";
 
-    CommandLine line = null;
+	CommandLine line = null;
     Options options = null;
 
 	/**
@@ -117,6 +118,14 @@ public class CommandProcessor {
 				.build();
 		options.addOption(opt);
 
+		opt = Option.builder("format")
+				.hasArg()
+				.argName("FORMAT")
+				.valueSeparator()
+				.desc("target file format for export. Can be PNG or JPG")
+				.build();
+		options.addOption(opt);
+
 		opt = Option.builder("width")
 				.hasArg()
 				.argName("WIDTH")
@@ -130,14 +139,6 @@ public class CommandProcessor {
 				.argName("FACTOR")
 				.valueSeparator()
 				.desc("jpeg encoder quality factor. Float (between 0 and 1). 1 - no lossy")
-				.build();
-		options.addOption(opt);
-
-		opt = Option.builder("format")
-				.hasArg()
-				.argName("FORMAT")
-				.valueSeparator()
-				.desc("target file format for export. Can be PNG or JPG")
 				.build();
 		options.addOption(opt);
 
@@ -160,6 +161,10 @@ public class CommandProcessor {
 				str = line.getOptionValue("tempdir");
 				ipf.setTempDirectory(new File(str));
 			}
+			if (line.hasOption("format")) {
+				str = line.getOptionValue("format");
+				ipf.setExportFormat(str);
+			}
 			if (line.hasOption("width")) {
 				str = line.getOptionValue("width");
 				ipf.setWidth(Integer.parseInt(str));
@@ -168,14 +173,9 @@ public class CommandProcessor {
 				str = line.getOptionValue("quality");
 				ipf.setQuality(Float.parseFloat(str));
 			}
-			if (line.hasOption("format")) {
-				str = line.getOptionValue("format");
-				ipf.setExportFormat(str);
-			}
 		}
 		catch (Exception exc) {
 			System.out.println("Initialisation failed. Illegal or invalid parameter found.");
-			exc.printStackTrace();
 			showHelp(this.options);
 			System.exit(2);
 		}
@@ -183,6 +183,7 @@ public class CommandProcessor {
 	
 	private void showHelp(Options options) {
 		HelpFormatter formatter = new HelpFormatter();
+		formatter.setOptionComparator(null);
 		formatter.printHelp( "svgupdater", options);		
 	}
 }
